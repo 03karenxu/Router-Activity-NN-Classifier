@@ -12,9 +12,9 @@ test_file = './test.csv'
 train_file = './train.csv'
 
 # hyperparameters
-learning_rate = 1e-3
+learning_rate = 5e-4
 batch_size = 32
-epochs = 20
+epochs = 15
 
 # define dataset class
 class PacketVolumeDataset(Dataset):
@@ -22,9 +22,6 @@ class PacketVolumeDataset(Dataset):
    def __init__(self, csv_file):
       # load csv to dataframe
       self.df = pd.read_csv(csv_file,header=None)
-
-      # drop device name and interface name columns
-      self.df = self.df.drop(self.df.columns[[0, 1]], axis=1)
 
       # split features from label
       x = self.df.iloc[:, :-1].values
@@ -109,7 +106,7 @@ def test_loop(dataloader, model, loss_fn):
          pred = model(x).squeeze(1) # remove label
          test_loss += loss_fn(pred, y.float()).item()
          probs = torch.sigmoid(pred)
-         predicted = (probs > 0.5).long()
+         predicted = (probs > 0.3).long()
          correct += (predicted == y).sum().item()
 
    test_loss /= num_batches
@@ -122,3 +119,17 @@ for t in range(epochs):
    train_loop(train_dataloader, model, loss_fn, optimizer)
    test_loop(test_dataloader, model, loss_fn)
 print("Done!")
+
+# test
+sample = np.array([3123275,3078842,2766476,2799381,2563540,2571852,2671010,2988791,2896058,2729306,2575240,2647077,2641776,2732868,2751066,2679022,2705588,2614844,2621927,3107265,2916175,2884927,2789264,2494150])
+
+x_sample = torch.tensor(sample, dtype=torch.float32).unsqueeze(0)
+
+model.eval()
+
+with torch.no_grad():
+   logits = model(x_sample).squeeze(1)
+   prob = torch.sigmoid(logits)
+   predicted_class = (prob > 0.3).long()
+
+print(f"Predicted class: {predicted_class.item()}")
