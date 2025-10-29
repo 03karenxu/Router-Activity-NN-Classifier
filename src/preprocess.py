@@ -9,15 +9,16 @@ from sklearn.model_selection import train_test_split
 
 
 # main preprocess function
-def preprocess(x):
+def preprocess(x,s):
     x = min_max_scale(x)
-    x = fit_spline(x)
+    # x = fit_spline(x,s)
     return x
 
 
 # plots a random sample
-def plot_random_sample(x, y):
-    i = np.random.choice(x.shape[0])
+def plot_random_sample(x, y, i=-1):
+    if i == -1:
+        i = np.random.choice(x.shape[0])
     row = x[i]
     label = y[i]
     plot_sample(row,label)
@@ -38,7 +39,7 @@ def plot_all(label, x, y):
     indices_label = np.where(y == label)[0]
     plt.figure(figsize=(10, 6))
     for i in indices_label:
-        plt.plot(x[i], alpha=0.3, color="blue")
+        plt.plot(x[i], alpha=0.1, color="blue")
     plt.ylabel("Activity")
     plt.title(f"All Samples with Label {label}")
     plt.show()
@@ -63,8 +64,10 @@ def split_features(df):
 
 # scales sample-wise to values between 0 and 1
 def min_max_scale(x):
-    x_min = x.min(axis=0)
-    x_max = x.max(axis=0)
+    # x_min = x.min()
+    # x_max = x.max()
+    x_min = x.min(axis=1,keepdims=True)
+    x_max = x.max(axis=1,keepdims=True)
     return (x - x_min) / (x_max - x_min + 1e-9)
 
 
@@ -76,16 +79,13 @@ def apply_smote(x, y):
 
 
 # fits a univariate spline to all samples
-def fit_spline(x):
+def fit_spline(x,s):
     x_smoothed = []
-    x = np.array(x)
     time_steps = np.arange(x.shape[1])
-    
     for sample in x:
-        spl = UnivariateSpline(time_steps, sample,s=0.5)
-        smoothed_sample = spl(time_steps)
-        x_smoothed.append(smoothed_sample)
-    
+        spl = UnivariateSpline(time_steps,sample,s=s) 
+        smoothed_sample = spl(time_steps) 
+        x_smoothed.append(smoothed_sample) 
     return np.array(x_smoothed)
 
 
